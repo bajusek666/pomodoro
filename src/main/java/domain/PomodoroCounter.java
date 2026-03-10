@@ -51,6 +51,10 @@ public class PomodoroCounter implements CounterController{
         return this.timeRemaining;
     }
 
+    public CounterState readState(){
+        return this.counterState;
+    }
+
     public void setFocusDuration(int duration){
         this.focusDuration = duration;
     }
