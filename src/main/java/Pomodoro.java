@@ -4,7 +4,6 @@ import ui.PomodoroApplication;
 
 public class Pomodoro {
     static void main() {
-        PomodoroCounter counter = new PomodoroCounter();
         PomodoroApplication.launch();
     }
 }
