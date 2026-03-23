@@ -1,16 +1,11 @@
 package domain;
 
-import javafx.beans.InvalidationListener;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableNumberValue;
-
 import java.time.Instant;
 
-public class PomodoroCounter implements CounterController{
+public class PomodoroCounter implements CounterController, Runnable{
     private int focusDuration;
     private int restDuration;
-    private boolean state;
+    private boolean running;
     private double currentTime;
     private CounterState counterState;
     private Instant instant;
@@ -18,7 +13,7 @@ public class PomodoroCounter implements CounterController{
     public PomodoroCounter(){
         this.restDuration = 5;
         this.focusDuration = 30;
-        this.state = false;
+        this.running = false;
         this.counterState = CounterState.FOCUS;
         this.currentTime = 0;
     }
@@ -29,19 +24,26 @@ public class PomodoroCounter implements CounterController{
         this.restDuration = restTime;
     }
 
+    public void run(){
+        start();
+    }
+
     public void start(){
-        this.state = true;
+        this.running = true;
 
         instant = Instant.now();
         long startTime = instant.toEpochMilli();
+        System.out.println("Focus started");
 
-        while(this.state){
+        while(this.running){
+
             counterState = CounterState.FOCUS;
 
             instant = Instant.now();
             currentTime = instant.toEpochMilli() - startTime;
 
-            if(currentTime >= focusDuration){
+            if(currentTime >= focusDuration*1000){
+                System.out.println("Focus ended");
                 rest();
                 startTime = Instant.now().toEpochMilli();
             }
@@ -50,25 +52,29 @@ public class PomodoroCounter implements CounterController{
 
     public void rest(){
         counterState = CounterState.REST;
+        System.out.println("Rest started");
 
         instant = Instant.now();
         long startTime = instant.toEpochMilli();
 
-        while(this.state){
+        while(this.running){
+
+            instant = Instant.now();
             currentTime = instant.toEpochMilli() - startTime;
 
-            if(currentTime >= restDuration){
-                break;
+            if(currentTime >= restDuration*1000){
+                System.out.println("Rest ended");
+                return;
             }
         }
     }
 
     public void stop(){
-//        this.state = false;
+        this.running = false;
     }
 
     public void reset(){
-        this.state = false;
+        this.running = false;
         currentTime = 0;
     }
 
@@ -78,6 +84,18 @@ public class PomodoroCounter implements CounterController{
 
     public void setRestDuration(int duration){
         this.restDuration = duration;
+    }
+
+    public CounterState getCounterState(){
+        return this.counterState;
+    }
+
+    public boolean isRunning(){
+        return this.running;
+    }
+
+    public double getCurrentTime(){
+        return this.currentTime;
     }
 
 }

@@ -1,6 +1,7 @@
 package ui;
 
 import domain.PomodoroCounter;
+import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -20,12 +21,20 @@ public class PomodoroApplication extends Application {
     private BorderPane timerLayout;
     private FlowPane configLayout;
     private Insets defaultInsets;
+    private Thread counterThread;
 
-    public void start(Stage stage){
+    //nowy wątek uruchomiony z PomodoroCounterem. Jeżeli jest uruchomiony to stop i reset go zatrzymują
+
+    public static void launch() {
+        launch(PomodoroApplication.class);
+    }
+
+    public void start(Stage stage) {
         this.pomodoroCounter = new PomodoroCounter(25, 5);
         this.layout = new BorderPane();
         this.defaultInsets = new Insets(10, 10, 10, 10);
         this.layout.setPrefSize(300, 200);
+        this.counterThread = new Thread(pomodoroCounter);
 
         HBox menu = createMenu();
         this.timerLayout = createTimerLayout();
@@ -39,7 +48,7 @@ public class PomodoroApplication extends Application {
         stage.show();
     }
 
-    private HBox createMenu(){
+    private HBox createMenu() {
         HBox menu = new HBox(20);
 
         Button timer = new Button("Timer");
@@ -63,8 +72,15 @@ public class PomodoroApplication extends Application {
     private BorderPane createTimerLayout() {
         BorderPane timerLayout = new BorderPane();
 
-        Label timer = new Label("00:00");
-        timer.setFont(Font.font(30));
+        Label timerLabel = new Label("00:00");
+        timerLabel.setFont(Font.font(30));
+
+        new AnimationTimer() {
+            @Override
+            public void handle(long l) {
+                timerLabel.setText(String.valueOf(pomodoroCounter.getCurrentTime()));
+            }
+        }.start();
 
         Button stop = new Button("Stop");
         Button start = new Button("Start");
@@ -75,7 +91,7 @@ public class PomodoroApplication extends Application {
         timerControls.setSpacing(20);
         timerControls.setPadding(defaultInsets);
 
-        timerLayout.setCenter(timer);
+        timerLayout.setCenter(timerLabel);
         timerLayout.setBottom(timerControls);
 
         stop.setOnAction((event) -> {
@@ -83,7 +99,14 @@ public class PomodoroApplication extends Application {
         });
 
         start.setOnAction((event) -> {
-            this.pomodoroCounter.start();
+            if (this.counterThread.getState().equals(Thread.State.TERMINATED)) {
+                this.counterThread = new Thread(pomodoroCounter);
+                this.counterThread.start();
+            } else if (this.counterThread.isAlive()){
+                System.out.println("Counter jest już uruchomiony");
+            } else {
+                this.counterThread.start();
+            }
         });
 
         reset.setOnAction((event) -> {
@@ -93,7 +116,7 @@ public class PomodoroApplication extends Application {
         return timerLayout;
     }
 
-    private FlowPane createConfigLayout(){
+    private FlowPane createConfigLayout() {
         FlowPane configLayout = new FlowPane();
         configLayout.setAlignment(Pos.CENTER);
 
@@ -102,11 +125,11 @@ public class PomodoroApplication extends Application {
 
         Label focusDurationLabel = new Label("Focus duration [min]:");
         Slider focusDurationSlider = new Slider(10, 115, 50);
-        Label focusDurationValue = new Label(String.valueOf((int)Math.round(focusDurationSlider.getValue())));
+        Label focusDurationValue = new Label(String.valueOf((int) Math.round(focusDurationSlider.getValue())));
 
         Label restDurationLabel = new Label("Rest duration [min]:");
         Slider restDurationSlider = new Slider(5, 60, 10);
-        Label restDurationValue = new Label(String.valueOf((int)Math.round(restDurationSlider.getValue())));
+        Label restDurationValue = new Label(String.valueOf((int) Math.round(restDurationSlider.getValue())));
 
         focusBox.getChildren().addAll(focusDurationLabel, focusDurationSlider, focusDurationValue);
         restBox.getChildren().addAll(restDurationLabel, restDurationSlider, restDurationValue);
@@ -134,9 +157,5 @@ public class PomodoroApplication extends Application {
         configLayout.getChildren().addAll(focusBox, restBox);
 
         return configLayout;
-    }
-
-    public static void launch(){
-        launch(PomodoroApplication.class);
     }
 }
