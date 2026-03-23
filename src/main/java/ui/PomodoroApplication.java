@@ -2,6 +2,8 @@ package ui;
 
 import domain.PomodoroCounter;
 import javafx.application.Application;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -17,10 +19,14 @@ public class PomodoroApplication extends Application {
     private BorderPane layout;
     private BorderPane timerLayout;
     private FlowPane configLayout;
+    private Insets defaultInsets;
 
     public void start(Stage stage){
         this.pomodoroCounter = new PomodoroCounter();
         this.layout = new BorderPane();
+        this.defaultInsets = new Insets(10, 10, 10, 10);
+
+        this.layout.setPrefSize(300, 200);
 
         HBox menu = createMenu();
         this.timerLayout = createTimerLayout();
@@ -35,11 +41,14 @@ public class PomodoroApplication extends Application {
     }
 
     private HBox createMenu(){
-        HBox menu = new HBox();
+        HBox menu = new HBox(20);
 
         Button timer = new Button("Timer");
         Button config = new Button("Configuration");
         menu.getChildren().addAll(timer, config);
+
+        menu.setPadding(defaultInsets);
+        menu.setAlignment(Pos.CENTER);
 
         timer.setOnAction((event) -> {
             this.layout.setCenter(this.timerLayout);
@@ -63,6 +72,9 @@ public class PomodoroApplication extends Application {
         Button reset = new Button("Reset");
 
         HBox timerControls = new HBox(stop, start, reset);
+        timerControls.setAlignment(Pos.CENTER);
+        timerControls.setSpacing(20);
+        timerControls.setPadding(defaultInsets);
 
         timerLayout.setCenter(timer);
         timerLayout.setBottom(timerControls);
@@ -84,13 +96,43 @@ public class PomodoroApplication extends Application {
 
     private FlowPane createConfigLayout(){
         FlowPane configLayout = new FlowPane();
+        configLayout.setAlignment(Pos.CENTER);
 
-        Label focusDurationLabel = new Label("Focus duration in minutes:");
-        Slider focusDurationSlider = new Slider(10, 115, 25);
-        Label restDurationLabel = new Label("Rest duration in minutes:");
-        Slider restDurationSlider = new Slider(5, 60, 5);
+        HBox focusBox = new HBox(10);
+        HBox restBox = new HBox(10);
 
-        configLayout.getChildren().addAll(focusDurationLabel, focusDurationSlider, restDurationLabel, restDurationSlider);
+        Label focusDurationLabel = new Label("Focus duration [min]:");
+        Slider focusDurationSlider = new Slider(10, 115, 50);
+        Label focusDurationValue = new Label(String.valueOf((int)Math.round(focusDurationSlider.getValue())));
+
+        Label restDurationLabel = new Label("Rest duration [min]:");
+        Slider restDurationSlider = new Slider(5, 60, 10);
+        Label restDurationValue = new Label(String.valueOf((int)Math.round(restDurationSlider.getValue())));
+
+        focusBox.getChildren().addAll(focusDurationLabel, focusDurationSlider, focusDurationValue);
+        restBox.getChildren().addAll(restDurationLabel, restDurationSlider, restDurationValue);
+
+        focusDurationSlider.setShowTickLabels(true);
+        focusDurationSlider.setShowTickMarks(true);
+
+        restDurationSlider.setShowTickLabels(true);
+        restDurationSlider.setShowTickMarks(true);
+
+        focusDurationSlider.valueProperty().addListener((observableValue, oldVal, newVal) -> {
+            this.pomodoroCounter.stop();
+            this.pomodoroCounter.reset();
+            this.pomodoroCounter.setFocusDuration(newVal.intValue());
+            focusDurationValue.setText(String.valueOf(newVal.intValue()));
+        });
+
+        restDurationSlider.valueProperty().addListener((observableValue, oldVal, newVal) -> {
+            this.pomodoroCounter.stop();
+            this.pomodoroCounter.reset();
+            this.pomodoroCounter.setRestDuration(newVal.intValue());
+            restDurationValue.setText(String.valueOf(newVal.intValue()));
+        });
+
+        configLayout.getChildren().addAll(focusBox, restBox);
 
         return configLayout;
     }
