@@ -1,58 +1,75 @@
 package domain;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableNumberValue;
+
+import java.time.Instant;
+
 public class PomodoroCounter implements CounterController{
     private int focusDuration;
     private int restDuration;
-    private int timeRemaining;
     private boolean state;
+    private double currentTime;
     private CounterState counterState;
+    private Instant instant;
 
     public PomodoroCounter(){
         this.restDuration = 5;
         this.focusDuration = 30;
-        this.timeRemaining = this.focusDuration;
         this.state = false;
         this.counterState = CounterState.FOCUS;
+        this.currentTime = 0;
+    }
+
+    public PomodoroCounter(int focusTime, int restTime){
+        this();
+        this.focusDuration = focusTime;
+        this.restDuration = restTime;
     }
 
     public void start(){
         this.state = true;
 
-        while(state){
+        instant = Instant.now();
+        long startTime = instant.toEpochMilli();
+
+        while(this.state){
             counterState = CounterState.FOCUS;
-            timeRemaining--;
-            //wait one second
-            if(timeRemaining == 0){
+
+            instant = Instant.now();
+            currentTime = instant.toEpochMilli() - startTime;
+
+            if(currentTime >= focusDuration){
                 rest();
-                timeRemaining = focusDuration;
+                startTime = Instant.now().toEpochMilli();
             }
         }
     }
 
     public void rest(){
         counterState = CounterState.REST;
-        int timeRemaining = this.restDuration;
-        while(timeRemaining > 0){
-            timeRemaining--;
-            //wait 1 second
+
+        instant = Instant.now();
+        long startTime = instant.toEpochMilli();
+
+        while(this.state){
+            currentTime = instant.toEpochMilli() - startTime;
+
+            if(currentTime >= restDuration){
+                break;
+            }
         }
     }
 
     public void stop(){
-
+//        this.state = false;
     }
 
     public void reset(){
         this.state = false;
-        this.timeRemaining = focusDuration;
-    }
-
-    public int readTime(){
-        return this.timeRemaining;
-    }
-
-    public CounterState readState(){
-        return this.counterState;
+        currentTime = 0;
     }
 
     public void setFocusDuration(int duration){
@@ -62,4 +79,5 @@ public class PomodoroCounter implements CounterController{
     public void setRestDuration(int duration){
         this.restDuration = duration;
     }
+
 }

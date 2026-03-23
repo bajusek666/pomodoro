@@ -22,10 +22,9 @@ public class PomodoroApplication extends Application {
     private Insets defaultInsets;
 
     public void start(Stage stage){
-        this.pomodoroCounter = new PomodoroCounter();
+        this.pomodoroCounter = new PomodoroCounter(25, 5);
         this.layout = new BorderPane();
         this.defaultInsets = new Insets(10, 10, 10, 10);
-
         this.layout.setPrefSize(300, 200);
 
         HBox menu = createMenu();
@@ -65,7 +64,7 @@ public class PomodoroApplication extends Application {
         BorderPane timerLayout = new BorderPane();
 
         Label timer = new Label("00:00");
-        timer.setFont(Font.font(20));
+        timer.setFont(Font.font(30));
 
         Button stop = new Button("Stop");
         Button start = new Button("Start");
