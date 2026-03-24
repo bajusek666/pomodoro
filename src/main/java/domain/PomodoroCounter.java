@@ -1,18 +1,21 @@
 package domain;
 
 import java.time.Instant;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class PomodoroCounter implements CounterController, Runnable{
     private int focusDuration;
     private int restDuration;
     private boolean running;
-    private double currentTime;
+    private long currentTime;
     private CounterState counterState;
     private Instant instant;
+    private static final int MILLISECONDS_IN_MINUTE = 60000;
 
     public PomodoroCounter(){
-        this.restDuration = 5;
-        this.focusDuration = 30;
+        setRestDuration(5);
+        setFocusDuration(25);
         this.running = false;
         this.counterState = CounterState.FOCUS;
         this.currentTime = 0;
@@ -20,8 +23,8 @@ public class PomodoroCounter implements CounterController, Runnable{
 
     public PomodoroCounter(int focusTime, int restTime){
         this();
-        this.focusDuration = focusTime;
-        this.restDuration = restTime;
+        setRestDuration(restTime);
+        setFocusDuration(focusTime);
     }
 
     public void run(){
@@ -42,7 +45,7 @@ public class PomodoroCounter implements CounterController, Runnable{
             instant = Instant.now();
             currentTime = instant.toEpochMilli() - startTime;
 
-            if(currentTime >= focusDuration*1000){
+            if(currentTime >= focusDuration){
                 System.out.println("Focus ended");
                 rest();
                 startTime = Instant.now().toEpochMilli();
@@ -62,7 +65,7 @@ public class PomodoroCounter implements CounterController, Runnable{
             instant = Instant.now();
             currentTime = instant.toEpochMilli() - startTime;
 
-            if(currentTime >= restDuration*1000){
+            if(currentTime >= restDuration){
                 System.out.println("Rest ended");
                 return;
             }
@@ -79,11 +82,11 @@ public class PomodoroCounter implements CounterController, Runnable{
     }
 
     public void setFocusDuration(int duration){
-        this.focusDuration = duration;
+        this.focusDuration = duration * MILLISECONDS_IN_MINUTE;
     }
 
     public void setRestDuration(int duration){
-        this.restDuration = duration;
+        this.restDuration = duration * MILLISECONDS_IN_MINUTE;
     }
 
     public CounterState getCounterState(){
@@ -94,8 +97,7 @@ public class PomodoroCounter implements CounterController, Runnable{
         return this.running;
     }
 
-    public double getCurrentTime(){
-        return this.currentTime;
+    public int getCurrentSeconds(){
+        return (int)TimeUnit.MILLISECONDS.toSeconds(this.currentTime);
     }
-
 }

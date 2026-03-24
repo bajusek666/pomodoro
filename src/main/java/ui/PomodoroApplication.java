@@ -15,15 +15,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 public class PomodoroApplication extends Application {
     private PomodoroCounter pomodoroCounter;
     private BorderPane layout;
     private BorderPane timerLayout;
     private FlowPane configLayout;
     private Insets defaultInsets;
-    private Thread counterThread;
-
-    //nowy wątek uruchomiony z PomodoroCounterem. Jeżeli jest uruchomiony to stop i reset go zatrzymują
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private Future<?> future;
 
     public static void launch() {
         launch(PomodoroApplication.class);
@@ -34,7 +37,6 @@ public class PomodoroApplication extends Application {
         this.layout = new BorderPane();
         this.defaultInsets = new Insets(10, 10, 10, 10);
         this.layout.setPrefSize(300, 200);
-        this.counterThread = new Thread(pomodoroCounter);
 
         HBox menu = createMenu();
         this.timerLayout = createTimerLayout();
@@ -58,13 +60,9 @@ public class PomodoroApplication extends Application {
         menu.setPadding(defaultInsets);
         menu.setAlignment(Pos.CENTER);
 
-        timer.setOnAction((event) -> {
-            this.layout.setCenter(this.timerLayout);
-        });
+        timer.setOnAction((event) -> this.layout.setCenter(this.timerLayout));
 
-        config.setOnAction((event) -> {
-            this.layout.setCenter(this.configLayout);
-        });
+        config.setOnAction((event) -> this.layout.setCenter(this.configLayout));
 
         return menu;
     }
@@ -78,7 +76,7 @@ public class PomodoroApplication extends Application {
         new AnimationTimer() {
             @Override
             public void handle(long l) {
-                timerLabel.setText(String.valueOf(pomodoroCounter.getCurrentTime()));
+                timerLabel.setText(buildTimeString());
             }
         }.start();
 
@@ -94,26 +92,36 @@ public class PomodoroApplication extends Application {
         timerLayout.setCenter(timerLabel);
         timerLayout.setBottom(timerControls);
 
-        stop.setOnAction((event) -> {
-            this.pomodoroCounter.stop();
-        });
+        stop.setOnAction((event) -> this.pomodoroCounter.stop());
 
-        start.setOnAction((event) -> {
-            if (this.counterThread.getState().equals(Thread.State.TERMINATED)) {
-                this.counterThread = new Thread(pomodoroCounter);
-                this.counterThread.start();
-            } else if (this.counterThread.isAlive()){
-                System.out.println("Counter jest już uruchomiony");
-            } else {
-                this.counterThread.start();
-            }
-        });
+        start.setOnAction((event) -> startCounter());
 
-        reset.setOnAction((event) -> {
-            this.pomodoroCounter.reset();
-        });
+        reset.setOnAction((event) -> this.pomodoroCounter.reset());
 
         return timerLayout;
+    }
+
+    private String buildTimeString(){
+        int seconds = pomodoroCounter.getCurrentSeconds();
+        int minutes = (int)Math.floor(seconds/60);
+        seconds = seconds % 60;
+
+        StringBuffer timeString = new StringBuffer();
+        timeString.append(minutes);
+        timeString.append(":");
+        if(seconds < 10){
+            timeString.append(0);
+        }
+        timeString.append(seconds);
+        return timeString.toString();
+    }
+
+    private void startCounter(){
+        if(future == null || future.isDone()){
+            future = executor.submit(pomodoroCounter);
+        }else{
+            System.out.println("Counter is already running!");
+        }
     }
 
     private FlowPane createConfigLayout() {
@@ -141,14 +149,12 @@ public class PomodoroApplication extends Application {
         restDurationSlider.setShowTickMarks(true);
 
         focusDurationSlider.valueProperty().addListener((observableValue, oldVal, newVal) -> {
-            this.pomodoroCounter.stop();
             this.pomodoroCounter.reset();
             this.pomodoroCounter.setFocusDuration(newVal.intValue());
             focusDurationValue.setText(String.valueOf(newVal.intValue()));
         });
 
         restDurationSlider.valueProperty().addListener((observableValue, oldVal, newVal) -> {
-            this.pomodoroCounter.stop();
             this.pomodoroCounter.reset();
             this.pomodoroCounter.setRestDuration(newVal.intValue());
             restDurationValue.setText(String.valueOf(newVal.intValue()));
@@ -158,4 +164,5 @@ public class PomodoroApplication extends Application {
 
         return configLayout;
     }
+
 }
