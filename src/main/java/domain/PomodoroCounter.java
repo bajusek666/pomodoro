@@ -28,10 +28,15 @@ public class PomodoroCounter implements CounterController, Runnable{
     }
 
     public void run(){
-        start();
+        try {
+            start();
+        }catch(InterruptedException e){
+            System.out.println("Program przerwany");
+            Thread.currentThread().interrupt();
+        }
     }
 
-    public void start(){
+    public void start() throws InterruptedException{
         this.running = true;
 
         instant = Instant.now();
@@ -39,6 +44,10 @@ public class PomodoroCounter implements CounterController, Runnable{
         System.out.println("Focus started");
 
         while(this.running){
+
+            if(Thread.currentThread().isInterrupted()){
+                throw new InterruptedException();
+            }
 
             counterState = CounterState.FOCUS;
 
@@ -53,7 +62,7 @@ public class PomodoroCounter implements CounterController, Runnable{
         }
     }
 
-    public void rest(){
+    public void rest() throws InterruptedException{
         counterState = CounterState.REST;
         System.out.println("Rest started");
 
@@ -61,6 +70,10 @@ public class PomodoroCounter implements CounterController, Runnable{
         long startTime = instant.toEpochMilli();
 
         while(this.running){
+
+            if(Thread.currentThread().isInterrupted()){
+                throw new InterruptedException();
+            }
 
             instant = Instant.now();
             currentTime = instant.toEpochMilli() - startTime;

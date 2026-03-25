@@ -1,9 +1,9 @@
 package domain;
 
 public interface CounterController {
-    void start();
+    void start() throws InterruptedException;
     void stop();
-    void reset();
+    void reset() throws InterruptedException;
     void setFocusDuration(int duration);
     void setRestDuration(int duration);
 }
