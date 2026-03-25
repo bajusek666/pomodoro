@@ -1,10 +1,10 @@
 package domain;
 
 import java.time.Instant;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class PomodoroCounter implements CounterController, Runnable{
+public class
+PomodoroCounter implements CounterController, Runnable{
     private int focusDuration;
     private int restDuration;
     private boolean running;
@@ -100,14 +100,6 @@ public class PomodoroCounter implements CounterController, Runnable{
 
     public void setRestDuration(int duration){
         this.restDuration = duration * MILLISECONDS_IN_MINUTE;
-    }
-
-    public CounterState getCounterState(){
-        return this.counterState;
-    }
-
-    public boolean isRunning(){
-        return this.running;
     }
 
     public int getCurrentSeconds(){

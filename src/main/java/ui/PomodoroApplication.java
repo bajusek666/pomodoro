@@ -140,7 +140,7 @@ public class PomodoroApplication extends Application {
 
         HBox focusBox = new HBox(10);
         HBox restBox = new HBox(10);
-        HBox focusSoundBox = new HBox(10);
+        FileChooserComponent fileChooser = new FileChooserComponent("Choose focus sound");
 
         Label focusDurationLabel = new Label("Focus duration [min]:");
         Slider focusDurationSlider = new Slider(10, 115, 50);
@@ -152,22 +152,6 @@ public class PomodoroApplication extends Application {
 
         focusBox.getChildren().addAll(focusDurationLabel, focusDurationSlider, focusDurationValue);
         restBox.getChildren().addAll(restDurationLabel, restDurationSlider, restDurationValue);
-
-        Button focusSoundButton = new Button("Choose focus sound:");
-        FileChooser focusSoundFileChooser = new FileChooser();
-
-        focusSoundButton.setOnAction((event) -> {
-            File file = focusSoundFileChooser.showOpenDialog(stage);
-            if(file != null){
-                try {
-                    desktop.open(file);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        focusSoundBox.getChildren().add(focusSoundButton);
 
         focusDurationSlider.setShowTickLabels(true);
         focusDurationSlider.setShowTickMarks(true);
@@ -187,7 +171,7 @@ public class PomodoroApplication extends Application {
             restDurationValue.setText(String.valueOf(newVal.intValue()));
         });
 
-        configLayout.getChildren().addAll(focusBox, restBox, focusSoundBox);
+        configLayout.getChildren().addAll(focusBox, restBox, fileChooser.getUI());
 
         return configLayout;
     }
