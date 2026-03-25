@@ -13,12 +13,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.text.Font;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.awt.*;
-import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -31,15 +28,12 @@ public class PomodoroApplication extends Application {
     private final Insets defaultInsets = new Insets(10, 10, 10, 10);
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private Future<?> future;
-    private Desktop desktop = Desktop.getDesktop();
-    private Stage stage;
 
     public static void launch() {
         launch(PomodoroApplication.class);
     }
 
     public void start(Stage stage) {
-        this.stage = stage;
         this.pomodoroCounter = new PomodoroCounter(25, 5);
         this.layout = new BorderPane();
         this.layout.setPrefSize(300, 200);
@@ -51,9 +45,7 @@ public class PomodoroApplication extends Application {
         this.layout.setTop(menu);
         this.layout.setCenter(this.timerLayout);
 
-        stage.setOnCloseRequest((event) -> {
-            this.executor.shutdownNow();
-        });
+        stage.setOnCloseRequest((event) -> this.executor.shutdownNow());
 
         Scene scene = new Scene(this.layout);
         stage.setScene(scene);
@@ -113,10 +105,10 @@ public class PomodoroApplication extends Application {
 
     private String buildTimeString(){
         int seconds = pomodoroCounter.getCurrentSeconds();
-        int minutes = (int)Math.floor(seconds/60);
+        int minutes = seconds / 60;
         seconds = seconds % 60;
 
-        StringBuffer timeString = new StringBuffer();
+        StringBuilder timeString = new StringBuilder();
         timeString.append(minutes);
         timeString.append(":");
         if(seconds < 10){
@@ -140,7 +132,8 @@ public class PomodoroApplication extends Application {
 
         HBox focusBox = new HBox(10);
         HBox restBox = new HBox(10);
-        FileChooserComponent fileChooser = new FileChooserComponent("Choose focus sound");
+        FileChooserComponent focusSoundFileChooser = new FileChooserComponent("Choose focus sound");
+        FileChooserComponent restSoundFileChooser = new FileChooserComponent("Choose rest sound");
 
         Label focusDurationLabel = new Label("Focus duration [min]:");
         Slider focusDurationSlider = new Slider(10, 115, 50);
@@ -171,7 +164,7 @@ public class PomodoroApplication extends Application {
             restDurationValue.setText(String.valueOf(newVal.intValue()));
         });
 
-        configLayout.getChildren().addAll(focusBox, restBox, fileChooser.getUI());
+        configLayout.getChildren().addAll(focusBox, restBox, focusSoundFileChooser.getComponent(), restSoundFileChooser.getComponent());
 
         return configLayout;
     }

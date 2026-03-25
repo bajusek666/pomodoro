@@ -1,51 +1,78 @@
 package ui;
 
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-import java.awt.Desktop;
 import java.io.File;
-import java.io.IOException;
 
 public class FileChooserComponent {
-    private Desktop desktop = Desktop.getDesktop();
-    private Button button;
+    private final Button button;
     private File file;
+    private Label label;
+    private HBox layout;
 
     public FileChooserComponent(String choiceButtonLabel){
-        this.button = new Button(choiceButtonLabel);
+        button = new Button(choiceButtonLabel);
     }
 
-    public HBox getUI(){
-        HBox layout = new HBox(10);
-        Label label = new Label("No file choosen.");
+    public HBox getComponent(){
+        layout = new HBox(10);
+        label = new Label("No file chosen.");
+        layout.getChildren().addAll(button, label);
 
-        layout.getChildren().addAll(this.button, label);
+        styleElements();
 
-        button.setOnAction((event) -> {
-            chooseFile();
-        });
+        button.setOnAction((event) -> chooseFile());
 
         return layout;
+    }
+
+    private void styleElements(){
+        button.setPadding(new Insets(5, 5, 5, 5));
+        label.setPadding(new Insets(5,5,5,5));
+        label.setFont(Font.font(12));
+        layout.setAlignment(Pos.CENTER);
+        label.setWrapText(true);
     }
 
     private void chooseFile(){
         Stage stage = new Stage();
         FileChooser fileChooser = new FileChooser();
 
-        this.file = fileChooser.showOpenDialog(stage);
-
-        if(file != null){
-            try {
-                desktop.open(file);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        File submitedFile = fileChooser.showOpenDialog(stage);
+        if(isFileValid(submitedFile)){
+            file = submitedFile;
+        }else{
+            label.setText("File must be .mp3 format");
         }
 
+        setLabelToPath();
+
         stage.close();
+    }
+
+    private boolean isFileValid(File file){
+            if(file == null){
+                return false;
+            }
+            String[] fileNameParts = file.getName().split("\\.");
+            if(fileNameParts.length == 2){
+                if(fileNameParts[1].equals("mp3")){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+    private void setLabelToPath(){
+        if(file != null){
+            label.setText(file.getName());
+        }
     }
 }
