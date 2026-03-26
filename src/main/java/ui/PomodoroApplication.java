@@ -1,5 +1,6 @@
 package ui;
 
+import domain.CounterState;
 import domain.PomodoroCounter;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -12,10 +13,13 @@ import javafx.scene.control.Slider;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.scene.media.AudioClip;
 
 import java.awt.*;
+import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -28,6 +32,8 @@ public class PomodoroApplication extends Application {
     private final Insets defaultInsets = new Insets(10, 10, 10, 10);
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private Future<?> future;
+    private File focusAudio;
+    private File restAudio;
 
     public static void launch() {
         launch(PomodoroApplication.class);
@@ -100,10 +106,20 @@ public class PomodoroApplication extends Application {
 
         reset.setOnAction((event) -> this.pomodoroCounter.reset());
 
+        pomodoroCounter.setListener((counterState) -> {
+            if (counterState == CounterState.FOCUS) {
+                timerLabel.setTextFill(Paint.valueOf("blue"));
+                playSound(focusAudio);
+            } else if (counterState == CounterState.REST) {
+                timerLabel.setTextFill(Paint.valueOf("green"));
+                playSound(restAudio);
+            }
+        });
+
         return timerLayout;
     }
 
-    private String buildTimeString(){
+    private String buildTimeString() {
         int seconds = pomodoroCounter.getCurrentSeconds();
         int minutes = seconds / 60;
         seconds = seconds % 60;
@@ -111,17 +127,24 @@ public class PomodoroApplication extends Application {
         StringBuilder timeString = new StringBuilder();
         timeString.append(minutes);
         timeString.append(":");
-        if(seconds < 10){
+        if (seconds < 10) {
             timeString.append(0);
         }
         timeString.append(seconds);
         return timeString.toString();
     }
 
-    private void startCounter(){
-        if(future == null || future.isDone()){
+    private void playSound(File file) {
+        if (file != null) {
+            AudioClip audioClip = new AudioClip(file.toURI().toString());
+            audioClip.play();
+        }
+    }
+
+    private void startCounter() {
+        if (future == null || future.isDone()) {
             future = executor.submit(pomodoroCounter);
-        }else{
+        } else {
             System.out.println("Counter is already running!");
         }
     }
@@ -162,6 +185,14 @@ public class PomodoroApplication extends Application {
             this.pomodoroCounter.reset();
             this.pomodoroCounter.setRestDuration(newVal.intValue());
             restDurationValue.setText(String.valueOf(newVal.intValue()));
+        });
+
+        focusSoundFileChooser.setListener(file -> {
+            focusAudio = file;
+        });
+
+        restSoundFileChooser.setListener(file -> {
+            restAudio = file;
         });
 
         configLayout.getChildren().addAll(focusBox, restBox, focusSoundFileChooser.getComponent(), restSoundFileChooser.getComponent());

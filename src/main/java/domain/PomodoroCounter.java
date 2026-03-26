@@ -12,6 +12,7 @@ PomodoroCounter implements CounterController, Runnable{
     private CounterState counterState;
     private Instant instant;
     private static final int MILLISECONDS_IN_MINUTE = 60000;
+    private StateChangeListener listener;
 
     public PomodoroCounter(){
         setRestDuration(5);
@@ -37,7 +38,9 @@ PomodoroCounter implements CounterController, Runnable{
     }
 
     public void start() throws InterruptedException{
-        this.running = true;
+        running = true;
+        counterState = CounterState.FOCUS;
+        notifyListener();
 
         instant = Instant.now();
         long startTime = instant.toEpochMilli();
@@ -49,14 +52,14 @@ PomodoroCounter implements CounterController, Runnable{
                 throw new InterruptedException();
             }
 
-            counterState = CounterState.FOCUS;
-
             instant = Instant.now();
             currentTime = instant.toEpochMilli() - startTime;
 
             if(currentTime >= focusDuration){
                 System.out.println("Focus ended");
                 rest();
+                counterState = CounterState.FOCUS;
+                notifyListener();
                 startTime = Instant.now().toEpochMilli();
             }
         }
@@ -64,6 +67,7 @@ PomodoroCounter implements CounterController, Runnable{
 
     public void rest() throws InterruptedException{
         counterState = CounterState.REST;
+        notifyListener();
         System.out.println("Rest started");
 
         instant = Instant.now();
@@ -82,6 +86,12 @@ PomodoroCounter implements CounterController, Runnable{
                 System.out.println("Rest ended");
                 return;
             }
+        }
+    }
+
+    private void notifyListener(){
+        if(this.listener != null){
+            this.listener.onStateChange(counterState);
         }
     }
 
@@ -104,5 +114,9 @@ PomodoroCounter implements CounterController, Runnable{
 
     public int getCurrentSeconds(){
         return (int)TimeUnit.MILLISECONDS.toSeconds(this.currentTime);
+    }
+
+    public void setListener(StateChangeListener listener){
+        this.listener = listener;
     }
 }

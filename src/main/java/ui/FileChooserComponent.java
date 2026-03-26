@@ -1,5 +1,6 @@
 package ui;
 
+import domain.FileChangeListener;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -16,12 +17,13 @@ public class FileChooserComponent {
     private File file;
     private Label label;
     private HBox layout;
+    private FileChangeListener listener;
 
-    public FileChooserComponent(String choiceButtonLabel){
+    public FileChooserComponent(String choiceButtonLabel) {
         button = new Button(choiceButtonLabel);
     }
 
-    public HBox getComponent(){
+    public HBox getComponent() {
         layout = new HBox(10);
         label = new Label("No file chosen.");
         layout.getChildren().addAll(button, label);
@@ -33,46 +35,51 @@ public class FileChooserComponent {
         return layout;
     }
 
-    private void styleElements(){
+    private void styleElements() {
         button.setPadding(new Insets(5, 5, 5, 5));
-        label.setPadding(new Insets(5,5,5,5));
+        label.setPadding(new Insets(5, 5, 5, 5));
         label.setFont(Font.font(12));
         layout.setAlignment(Pos.CENTER);
         label.setWrapText(true);
     }
 
-    private void chooseFile(){
+    private void chooseFile() {
         Stage stage = new Stage();
         FileChooser fileChooser = new FileChooser();
 
         File submitedFile = fileChooser.showOpenDialog(stage);
-        if(isFileValid(submitedFile)){
+        if (isFileValid(submitedFile)) {
             file = submitedFile;
-        }else{
+            notifyListener();
+            setLabelToPath();
+        } else {
             label.setText("File must be .mp3 format");
+            file = null;
         }
-
-        setLabelToPath();
 
         stage.close();
     }
 
-    private boolean isFileValid(File file){
-            if(file == null){
-                return false;
-            }
-            String[] fileNameParts = file.getName().split("\\.");
-            if(fileNameParts.length == 2){
-                if(fileNameParts[1].equals("mp3")){
-                    return true;
-                }
-            }
+    private boolean isFileValid(File file) {
+        if (file == null) {
             return false;
         }
+        return file.getName().toLowerCase().endsWith(".mp3");
+    }
 
-    private void setLabelToPath(){
-        if(file != null){
+    private void notifyListener() {
+        if (listener != null) {
+            this.listener.onChange(file);
+        }
+    }
+
+    private void setLabelToPath() {
+        if (file != null) {
             label.setText(file.getName());
         }
+    }
+
+    public void setListener(FileChangeListener listener) {
+        this.listener = listener;
     }
 }
